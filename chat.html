@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+  <link rel="stylesheet" href="./chat.css">
+</head>
+<body>
+  <div class="chat-container">
+    
+    <!-- Header -->
+    <header class="chat-header">
+      <img id="friendPhoto" src="./assets/user.png" alt="Friend" class="friend-photo">
+      <div class="friend-info">
+        <span id="friendName" class="friend-name">Friend Name</span>
+        <span class="friend-status">online</span>
+      </div>
+    </header>
+
+    <!-- Messages -->
+    <div id="chatMessages" class="chat-messages">
+      <!-- Messages appended here -->
+    </div>
+
+    <!-- Input box -->
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Type a message">
+      <button id="sendBtn">Send</button>
+      <audio id="bubbleSound" src="./assets/bubble.mp3"></audio>
+    </div>
+
+  </div>
+
+  <script type="module" src="./chat.js"></script>
+</body>
+</html>

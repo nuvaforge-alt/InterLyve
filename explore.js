@@ -39,6 +39,27 @@ async function renderUsersBatch(container, start, end, friends = {}) {
     name.textContent = user.displayName || 'Unnamed';
     name.classList.add('user-card-name');
 
+    // Open chat page when clicking anywhere on the card except the buttons
+card.addEventListener('click', async (e) => {
+  if (e.target !== addBtn && e.target !== removeBtn) {
+    const selectedFriendData = {
+      uid: user.uid,
+      displayName: user.displayName || 'Unnamed',
+      photoURL: user.photoURL || './assets/user.png',
+      email: user.email || ''
+    };
+
+    // Save current chat for the logged-in user
+    const currentChatRef = ref(db, `users/${auth.currentUser.uid}/currentChat`);
+    await set(currentChatRef, selectedFriendData);
+
+    // Switch to chat page
+    window.location.href = 'chat.html';
+  }
+});
+
+
+
     // --- ADD & REMOVE BUTTONS ---
     const addBtn = document.createElement('button');
     addBtn.textContent = '+';
