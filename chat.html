@@ -7,6 +7,26 @@
   <link rel="stylesheet" href="chat.css">
 </head>
 <body>
+
+  <style>
+    img {
+      width: 30px;
+    }
+    .tact {
+      width: 25px;
+    }
+    .preview-container {
+      display: none;
+      padding: 5px;
+      text-align: center;
+    }
+    .preview-container img {
+      max-width: 120px;
+      border-radius: 10px;
+      margin: 5px 0;
+    }
+  </style>
+
   <div class="chat-container">
 
     <!-- Chat header -->
@@ -16,18 +36,13 @@
         <span id="friendName" class="friend-name">Friend</span>
       </div>
       <div class="chat-header-right">
-        <!-- Call button SVG -->
+        <!-- Call button -->
         <button class="icon-btn" id="callBtn">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a2 2 0 011.95 1.52l.73 2.92a2 2 0 01-.45 2.03L8.6 11.6a16 16 0 006.8 6.8l1.18-1.18a2 2 0 012.03-.45l2.92.73A2 2 0 0121 17.72V21a2 2 0 01-2 2h-1c-9.94 0-18-8.06-18-18V5z"/>
-          </svg>
+          <img src="./assets/phone-call.png" alt="Call" class="tact">
         </button>
-
-        <!-- Video call button SVG -->
+        <!-- Video call button -->
         <button class="icon-btn" id="videoBtn">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-3 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6a2 2 0 012 2v4z"/>
-          </svg>
+          <img src="./assets/facetime-button.png" alt="Video Call" class="tact">
         </button>
       </div>
     </div>
@@ -37,14 +52,34 @@
       <!-- Messages will appear here -->
     </div>
 
+    <!-- Image preview + hidden file input (put this above your chat input) -->
+<div id="previewContainer" style="display:none" class="preview-container">
+  <img id="previewImage" class="image-preview" src="" alt="preview">
+  <button id="previewRemoveBtn" class="preview-remove-btn" title="Remove image">✕</button>
+  <label style="display:block; margin-top:5px;">
+    <input type="checkbox" id="viewOnceCheckbox"> Send as view-once
+  </label>
+</div>
+
+
+
+<input type="file" id="fileInput" accept="image/*" style="display:none" />
+<button id="fileBtn" class="icon-btn" title="Attach image">📎</button>
+
     <!-- Input area -->
     <div class="chat-input-container">
+      <!-- File upload button -->
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <button class="icon-btn" id="fileBtn">
+        <img src="assets/image.png" alt="Upload">
+      </button>
+
+      <!-- Message input -->
       <input type="text" id="messageInput" placeholder="Type a message">
-      <!-- Send button with paper plane SVG -->
+
+      <!-- Send button -->
       <button id="sendBtn" class="icon-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" width="24" height="24">
-          <path d="M2.94 2.94a1 1 0 011.32-.083l13 9a1 1 0 01-.015 1.666l-5.5 4a1 1 0 01-1.333-.15l-3-3a1 1 0 01-.293-.707V4a1 1 0 01.821-.994z"/>
-        </svg>
+        <img src="assets/send.png" alt="Send">
       </button>
     </div>
 
@@ -52,6 +87,17 @@
     <audio id="bubbleSound" src="./assets/bubble.mp3" preload="auto"></audio>
     
   </div>
+
+  <!-- Fullscreen Image Modal -->
+<div id="imageModal" class="image-modal">
+  <span id="modalClose" class="modal-close">&times;</span>
+  <a id="downloadLink" class="download-btn">
+  ⬇ Save
+</a>
+
+  <img id="modalImage" class="modal-image" alt="Preview">
+</div>
+
 
   <script type="module" src="chat.js"></script>
 </body>
