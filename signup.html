@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up - InterLyve</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">InterLyve</div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="login.html" class="btn">Login</a>
+    </nav>
+  </header>
+
+  <section class="form-section">
+    <div class="form-container">
+      <h2>Sign Up</h2>
+
+      <!-- Profile Picture -->
+      <label>Profile Picture</label>
+      <div class="profile-pic-upload">
+        <img id="signupPicPreview" src="./assets/user.png" alt="Profile Preview" />
+        <input type="file" id="signupProfilePic" accept="image/*" style="display:none;" />
+        <button type="button" class="btn" id="uploadPicBtn">Upload Profile Picture</button>
+        <span id="fileNameDisplay"></span>
+      </div>
+
+      <label for="signupUsername">Username</label>
+      <input type="text" placeholder="Username" id="signupUsername" />
+
+      <label for="signupEmail">Email</label>
+      <input type="email" placeholder="Email" id="signupEmail" />
+
+      <label for="signupPassword">Password</label>
+      <input type="password" placeholder="Password" id="signupPassword" />
+
+      <label for="signupBio">Bio</label>
+      <textarea id="signupBio" placeholder="Tell us a bit about yourself..." rows="3"></textarea>
+
+      <label for="signupCountry">Country</label>
+      <select id="signupCountry">
+        <option value="">Select Country</option>
+        <option value="Ghana">Ghana</option>
+        <option value="USA">USA</option>
+        <option value="UK">UK</option>
+        <option value="Canada">Canada</option>
+        <option value="Nigeria">Nigeria</option>
+        <option value="South Africa">South Africa</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="signupGender">Gender</label>
+      <select id="signupGender">
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="custom">Custom</option>
+      </select>
+
+      <label for="signupDOB">Date of Birth</label>
+      <input type="date" id="signupDOB" />
+
+      <label for="signupLocation">Location</label>
+      <input type="text" placeholder="Location" id="signupLocation" />
+
+      <label>
+        <input type="checkbox" id="signupTerms" />
+        I agree to the <a href="#">Terms and Conditions</a>
+      </label>
+
+      <button class="btn primary" onclick="signup()">Sign Up</button>
+      <p>Already have an account? <a href="login.html">Login</a></p>
+    </div>
+  </section>
+
+  <script type="module">
+    import { signup } from './app.js';
+    window.signup = signup;
+
+    // Profile picture upload handling
+    const signupPicInput = document.getElementById("signupProfilePic");
+    const signupPicPreview = document.getElementById("signupPicPreview");
+    const uploadPicBtn = document.getElementById("uploadPicBtn");
+
+    uploadPicBtn.addEventListener("click", () => signupPicInput.click());
+    signupPicInput.addEventListener("change", () => {
+      const file = signupPicInput.files[0];
+      signupPicPreview.src = file ? URL.createObjectURL(file) : "default-avatar.png";
+    });
+  </script>
+</body>
+</html>
