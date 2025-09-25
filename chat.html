@@ -4,34 +4,55 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
-  <link rel="stylesheet" href="./chat.css">
+  <link rel="stylesheet" href="chat.css">
 </head>
 <body>
   <div class="chat-container">
-    
-    <!-- Header -->
-    <header class="chat-header">
-      <img id="friendPhoto" src="./assets/user.png" alt="Friend" class="friend-photo">
-      <div class="friend-info">
-        <span id="friendName" class="friend-name">Friend Name</span>
-        <span class="friend-status">online</span>
+
+    <!-- Chat header -->
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <img id="friendPhoto" src="./assets/user.png" alt="Friend" class="friend-photo">
+        <span id="friendName" class="friend-name">Friend</span>
       </div>
-    </header>
+      <div class="chat-header-right">
+        <!-- Call button SVG -->
+        <button class="icon-btn" id="callBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a2 2 0 011.95 1.52l.73 2.92a2 2 0 01-.45 2.03L8.6 11.6a16 16 0 006.8 6.8l1.18-1.18a2 2 0 012.03-.45l2.92.73A2 2 0 0121 17.72V21a2 2 0 01-2 2h-1c-9.94 0-18-8.06-18-18V5z"/>
+          </svg>
+        </button>
 
-    <!-- Messages -->
-    <div id="chatMessages" class="chat-messages">
-      <!-- Messages appended here -->
+        <!-- Video call button SVG -->
+        <button class="icon-btn" id="videoBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-3 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6a2 2 0 012 2v4z"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
-    <!-- Input box -->
-    <div class="chat-input">
+    <!-- Chat messages area -->
+    <div class="chat-messages" id="chatMessages">
+      <!-- Messages will appear here -->
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-container">
       <input type="text" id="messageInput" placeholder="Type a message">
-      <button id="sendBtn">Send</button>
-      <audio id="bubbleSound" src="./assets/bubble.mp3"></audio>
+      <!-- Send button with paper plane SVG -->
+      <button id="sendBtn" class="icon-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" width="24" height="24">
+          <path d="M2.94 2.94a1 1 0 011.32-.083l13 9a1 1 0 01-.015 1.666l-5.5 4a1 1 0 01-1.333-.15l-3-3a1 1 0 01-.293-.707V4a1 1 0 01.821-.994z"/>
+        </svg>
+      </button>
     </div>
 
+    <!-- Bubble sound -->
+    <audio id="bubbleSound" src="./assets/bubble.mp3" preload="auto"></audio>
+    
   </div>
 
-  <script type="module" src="./chat.js"></script>
+  <script type="module" src="chat.js"></script>
 </body>
 </html>

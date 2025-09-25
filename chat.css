@@ -1,140 +1,188 @@
-* {
-  box-sizing: border-box;
+/* Base setup */
+body, html {
   margin: 0;
   padding: 0;
+  height: 100%;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-  background-color: #f2f2f2; /* app background color */
+  background-color: #e5ddd5; /* main app background */
 }
 
 .chat-container {
-  max-width: 600px;
-  height: 100vh;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff; /* solid background for chat */
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  border-radius: 10px;
-  overflow: hidden;
+  height: 100vh;
+  background-color: #e5ddd5; /* app background */
 }
 
 /* Header */
 .chat-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  background-color: #4a90e2; /* your app primary color */
-  color: #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  padding: 10px 15px;
+  background-color: #128c7e; /* primary app color */
+  color: white;
+  box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+}
+
+.chat-header-left {
+  display: flex;
+  align-items: center;
 }
 
 .friend-photo {
-  width: 50px;
-  height: 50px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  margin-right: 15px;
+  margin-right: 10px;
   object-fit: cover;
-}
-
-.friend-info {
-  display: flex;
-  flex-direction: column;
 }
 
 .friend-name {
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: 600;
+  font-size: 16px;
 }
 
-.friend-status {
-  font-size: 12px;
-  color: #d3f7e2;
+.chat-header-right .icon-btn {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 12px;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Messages */
+.chat-header-right svg {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+  fill: white;
+}
+
+/* Chat messages */
 .chat-messages {
   flex: 1;
-  padding: 15px;
   overflow-y: auto;
-  background-color: #e5ddd5;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  scroll-behavior: smooth;
 }
 
-/* Message bubbles */
+/* Individual message */
 .message {
-  max-width: 70%;
-  padding: 12px 18px;
-  border-radius: 20px;
-  position: relative;
-  word-wrap: break-word;
   display: flex;
   align-items: flex-end;
-  animation: popIn 0.3s ease-out;
 }
 
 .message.sent {
-  align-self: flex-end;
-  background-color: #dcf8c6; /* app sent color */
-  border-bottom-right-radius: 5px; /* pointed edge like WhatsApp */
+  justify-content: flex-end;
 }
 
 .message.received {
-  align-self: flex-start;
-  background-color: #ffffff; /* app received color */
-  border-bottom-left-radius: 5px; /* pointed edge like WhatsApp */
+  justify-content: flex-start;
 }
 
-/* Profile pic next to message */
-.message img {
-  width: 30px;
-  height: 30px;
+.msg-profile {
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
-  margin: 0 8px;
   object-fit: cover;
+  margin: 0 5px;
+}
+
+/* Bubble */
+.bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.message.sent .bubble {
+  background-color: #25d366; /* app green */
+  color: white;
+  border-bottom-right-radius: 0; /* pointed edge like WhatsApp */
+}
+
+.message.received .bubble {
+  background-color: #ffffff;
+  color: #303030;
+  border-bottom-left-radius: 0;
+}
+
+/* Bubble animation */
+.bubbly .bubble-pop {
+  animation: bubble-pop 0.25s ease forwards;
+}
+
+@keyframes bubble-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
 }
 
 /* Timestamp */
 .timestamp {
   font-size: 10px;
-  color: gray;
-  margin-top: 2px;
-  align-self: flex-end;
+  color: rgba(0,0,0,0.45);
+  margin-top: 3px;
+  text-align: right;
 }
 
-/* Pop-in animation */
-@keyframes popIn {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Input */
-.chat-input {
+/* Input area */
+.chat-input-container {
   display: flex;
-  padding: 10px;
-  border-top: 1px solid #ccc;
-  background-color: #f0f0f0;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #ffffff;
+  border-top: 1px solid #ddd;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  gap: 8px;
 }
 
-.chat-input input {
+#messageInput {
   flex: 1;
-  padding: 10px 15px;
-  border-radius: 50px;
+  padding: 10px 14px;
+  border-radius: 25px;
   border: 1px solid #ccc;
+  font-size: 14px;
   outline: none;
 }
 
-.chat-input button {
-  margin-left: 10px;
-  padding: 10px 15px;
+#sendBtn {
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: none;
-  background-color: #4a90e2;
-  color: white;
+  background-color: #128c7e; /* send button matches app color */
   cursor: pointer;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#sendBtn svg {
+  width: 20px;
+  height: 20px;
+  fill: white;
+}
+
+/* Scrollbar styling for modern look */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px;
 }

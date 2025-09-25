@@ -1,15 +1,14 @@
 import { auth, db } from './app.js';
-import { ref, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-// Container for friends
 const chatsContainer = document.getElementById('chatsContainer');
 let friendsListener = null;
 
-// Function to render friend cards
+// Render friend cards
 function renderFriendCard(friend) {
   const card = document.createElement('div');
   card.classList.add('chat-card');
-  card.id = `chat-${friend.uid}`; // assign an ID to easily remove later
+  card.id = `chat-${friend.uid}`;
 
   const img = document.createElement('img');
   img.src = friend.photoURL || './assets/user.png';
@@ -23,47 +22,57 @@ function renderFriendCard(friend) {
   card.appendChild(img);
   card.appendChild(name);
 
-  card.addEventListener('click', () => {
-    openChat(friend.uid, friend.displayName);
+  card.addEventListener('click', async () => {
+    await openChat(friend);
   });
 
   chatsContainer.appendChild(card);
 }
 
-// Open chat placeholder
-function openChat(friendUid, friendName) {
-  alert(`Opening chat with ${friendName}`);
-  // Here you can load messages dynamically or show chat UI
+// Open chat: save current chat and switch page
+async function openChat(friend) {
+  if (!auth.currentUser) return;
+
+  try {
+    const currentChatRef = ref(db, `users/${auth.currentUser.uid}/currentChat`);
+    await set(currentChatRef, {
+      uid: friend.uid,
+      displayName: friend.displayName,
+      photoURL: friend.photoURL || './assets/user.png',
+      email: friend.email || ''
+    });
+
+    // Redirect to chat page
+    window.location.href = './chat.html'; // change to your chat page path
+  } catch (err) {
+    console.error('Error opening chat:', err);
+  }
 }
 
-// Load friends and listen for changes
+// Load friends
 function loadFriends() {
   if (!auth.currentUser || !chatsContainer) return;
 
   const friendsRef = ref(db, `users/${auth.currentUser.uid}/friends`);
 
-  // Remove previous listener if exists
   if (friendsListener) friendsListener();
 
-  // Listen to real-time updates
   friendsListener = onValue(friendsRef, (snapshot) => {
     const friends = snapshot.exists() ? snapshot.val() : {};
-    
-    // Clear container first
+
     chatsContainer.innerHTML = '';
-    
+
     if (Object.keys(friends).length === 0) {
       chatsContainer.innerHTML = `<p>No chats yet. Start chatting with AI personalities!</p>`;
     }
 
-    // Render each friend
     for (const uid in friends) {
       renderFriendCard(friends[uid]);
     }
   });
 }
 
-// Load friends whenever the user logs in
+// Load friends when user logs in
 auth.onAuthStateChanged(user => {
   if (user) loadFriends();
 });
