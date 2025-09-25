@@ -13,8 +13,8 @@
     <nav>
       <a href="#">Home</a>
       <a href="#">About</a>
-      <a href="login.html" class="btn">Login</a>
-      <a href="signup.html" class="btn primary">Sign Up</a>
+      <button class="btn" onclick="openModal('loginModal')">Login</button>
+      <button class="btn primary" onclick="openModal('signupModal')">Sign Up</button>
     </nav>
   </header>
 
@@ -22,12 +22,101 @@
   <section class="hero">
     <h1>Welcome to InterLyve</h1>
     <p>Meet and chat with different AI personalities in real time.</p>
-    <a href="signup.html" class="btn primary">Get Started</a>
+    <button class="btn primary" onclick="openModal('signupModal')">Get Started</button>
   </section>
 
   <!-- Footer -->
   <footer>
     <p>© 2025 InterLyve. All rights reserved.</p>
   </footer>
+
+  <!-- Login Modal -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('loginModal')">&times;</span>
+      <h2>Login</h2>
+      <input type="email" placeholder="Email" id="loginEmail" />
+      <input type="password" placeholder="Password" id="loginPassword" />
+      <button class="btn primary" onclick="login()">Login</button>
+    </div>
+  </div>
+
+<div class="modal" id="signupModal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('signupModal')">&times;</span>
+    <h2>Sign Up</h2>
+
+    <!-- Profile Picture Upload -->
+    <label>Profile Picture</label>
+    <div class="profile-pic-upload">
+      <img id="signupPicPreview" src="default-avatar.png" alt="Profile Preview" 
+           style="width:100px; height:100px; border-radius:50%; object-fit:cover;">
+      <input type="file" id="signupProfilePic" accept="image/*" style="display:none;" />
+      <button type="button" class="btn" id="uploadPicBtn">Upload Profile Picture</button>
+      <span id="fileNameDisplay" style="margin-left:10px; font-size:0.9em;"></span>
+    </div>
+
+    <label for="signupUsername">Username</label>
+    <input type="text" placeholder="Username" id="signupUsername" />
+
+    <label for="signupEmail">Email</label>
+    <input type="email" placeholder="Email" id="signupEmail" />
+
+    <label for="signupPassword">Password</label>
+    <input type="password" placeholder="Password" id="signupPassword" />
+
+    <label for="signupBio">Bio</label>
+    <textarea id="signupBio" placeholder="Tell us a bit about yourself..." rows="3"></textarea>
+
+    <label for="signupCountry">Country</label>
+    <select id="signupCountry">
+      <option value="">Select Country</option>
+      <option value="Ghana">Ghana</option>
+      <option value="USA">USA</option>
+      <option value="UK">UK</option>
+      <option value="Canada">Canada</option>
+      <option value="Nigeria">Nigeria</option>
+      <option value="South Africa">South Africa</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label for="signupGender">Gender</label>
+    <select id="signupGender">
+      <option value="">Select Gender</option>
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+      <option value="custom">Custom</option>
+    </select>
+
+    <label for="signupDOB">Date of Birth</label>
+    <input type="date" id="signupDOB" />
+
+    <label for="signupLocation">Location</label>
+    <input type="text" placeholder="Location" id="signupLocation" />
+
+    <label>
+      <input type="checkbox" id="signupTerms" />
+      I agree to the <a href="#">Terms and Conditions</a>
+    </label>
+
+    <button class="btn primary" onclick="signup()">Sign Up</button>
+  </div>
+</div>
+
+
+
+<!-- Firebase SDKs -->
+<!-- Firebase SDKs -->
+<!-- Your custom app.js as a module -->
+ 
+<script type="module">
+  import { signup, openModal, closeModal } from './app.js';
+  window.signup = signup;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+</script>
+
+
+
 </body>
 </html>

@@ -14,10 +14,14 @@
     <div class="search-bar">
       <input type="text" placeholder="Search chats...">
     </div>
-    <div class="empty-chats">
+    <div class="empty-chats" id="chatsContainer">
       <p>No chats yet. Start chatting with AI personalities!</p>
     </div>
   </main>
+
+  <div id="notificationsContainer" class="notifications-container">
+  <!-- Notifications will appear here -->
+</div>
 
   <nav class="bottom-nav">
     <button onclick="window.location.href='main page.html'" class="nav-item active">
@@ -34,6 +38,9 @@
     </button>
   </nav>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="./app.js"></script>
+<script type="module" src="./explore.js"></script>
+<script type="module" src="./chats.js"></script>
+
 </body>
 </html>

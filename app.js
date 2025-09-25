@@ -8,6 +8,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+
+import { loadExploreUsers} from './explore.js';
+
 // ---- Firebase Config ----
 const firebaseConfig = {
   apiKey: "AIzaSyDVfhLFmklJCoU6hsBEWRq5WutjNzNCYH4",
@@ -155,7 +158,8 @@ const editableFields = [
   document.getElementById('settingsCountry'),
   document.getElementById('settingsGender'),
   document.getElementById('settingsLocation')
-];
+].filter(el => el !== null);
+
 
 if (saveBtn) saveBtn.style.display = 'block';
 
@@ -238,55 +242,6 @@ export function closeModal(id) {
 }
 
 
-// ---- Explore Section ----
-async function loadExploreUsers() {
-  const exploreContainer = document.getElementById('exploreContainer');
-  if (!exploreContainer) return;
-
-  exploreContainer.innerHTML = ''; // Clear previous users
-
-  try {
-    const snapshot = await get(ref(db, 'users/'));
-    if (!snapshot.exists()) return;
-
-    const users = snapshot.val();
-    for (const uid in users) {
-      const user = users[uid];
-
-      // Skip current logged-in user
-      if (auth.currentUser && auth.currentUser.uid === uid) continue;
-
-      const card = document.createElement('div');
-      card.classList.add('user-card');
-
-      // Profile pic
-      const img = document.createElement('img');
-      img.src = user.photoURL || 'default-avatar.png';
-      img.alt = user.displayName || 'User';
-      img.classList.add('user-card-img');
-
-      // Name
-      const name = document.createElement('span');
-      name.textContent = user.displayName || 'Unnamed';
-      name.classList.add('user-card-name');
-
-      card.appendChild(img);
-      card.appendChild(name);
-
-      exploreContainer.appendChild(card);
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-// Call it whenever Explore tab is opened
-const exploreTab = document.getElementById('exploreTab');
-if (exploreTab) {
-  exploreTab.addEventListener('click', () => {
-    loadExploreUsers();
-  });
-}
 
 
 // ---- Global functions ----
@@ -294,3 +249,7 @@ window.login = login;
 window.signup = signup;
 window.openModal = openModal;
 window.closeModal = closeModal;
+
+
+// At the bottom of app.js
+export { auth, db };

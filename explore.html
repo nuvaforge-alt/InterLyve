@@ -11,14 +11,21 @@
   <header class="app-header">InterLyve</header>
 
   <main class="main-content">
-    <div class="search-bar">
-      <input type="text" placeholder="Search AI models...">
-    </div>
+   <div id="exploreSearchContainer" class="search-bar">
+  <input type="text" id="exploreSearchInput" placeholder="Search users...">
+</div>
+<div id="exploreContainer"></div>
+
     <div id="exploreTab" class="tab-content">
   <div id="exploreContainer" class="explore-container"></div>
 </div>
 
   </main>
+
+  <div id="notificationsContainer" class="notifications-container">
+  <!-- Notifications will appear here -->
+</div>
+
 
   <nav class="bottom-nav">
     <button onclick="window.location.href='main page.html'" class="nav-item">
@@ -36,5 +43,7 @@
   </nav>
 
   <script type="module" src="app.js"></script>
+<script type="module" src="explore.js"></script>
+
 </body>
 </html>
