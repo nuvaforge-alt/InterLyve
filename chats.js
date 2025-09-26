@@ -1,17 +1,19 @@
+// friendslist.js
 import { auth, db } from './app.js';
-import { ref, set, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { ref, set, onValue, query, limitToLast, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
 const chatsContainer = document.getElementById('chatsContainer');
 let friendsListener = null;
 
+// Map to store latest chat data for sorted rendering
+let chatDataMap = {};
+
+// Helper: Get chat ID
 function getChatId(uid1, uid2) {
   return uid1 < uid2 ? uid1 + '_' + uid2 : uid2 + '_' + uid1;
 }
 
-// Map to store latest chat data so we can re-render sorted list in real-time
-let chatDataMap = {};
-
-// Render friend card
+// Render a single friend card
 function renderFriendCard(friend, lastMsg, isUnread) {
   const cardId = `chat-${friend.uid}`;
   let card = document.getElementById(cardId);
@@ -44,164 +46,134 @@ function renderFriendCard(friend, lastMsg, isUnread) {
   const timeEl = card.querySelector('.chat-card-time');
   const tickEl = card.querySelector('.tick');
 
-  // Update last message text
-  if (lastMsg) {
-    lastMsgSpan.textContent = lastMsg.text || (lastMsg.image ? "[Image]" : "");
-  } else {
-    lastMsgSpan.textContent = "";
-  }
+  lastMsgSpan.textContent = lastMsg ? lastMsg.text || (lastMsg.image ? "[Image]" : "") : "";
+  timeEl.textContent = lastMsg?.timestamp
+    ? new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : "";
 
-  // Update timestamp
-  if (lastMsg?.timestamp) {
-    const date = new Date(lastMsg.timestamp);
-    timeEl.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } else {
-    timeEl.textContent = "";
-  }
-
-  // Update tick / unread state
-  if (lastMsg) {
-    if (lastMsg.sender === auth.currentUser.uid) {
-      // Sent by me → show ticks
-      if (lastMsg.read) {
-        tickEl.textContent = "✔✔";
-        tickEl.classList.add("blue");
-      } else if (lastMsg.delivered) {
-        tickEl.textContent = "✔✔";
-        tickEl.classList.remove("blue");
-      } else {
-        tickEl.textContent = "✔";
-        tickEl.classList.remove("blue");
-      }
+  // Updated tick logic
+  if (lastMsg && lastMsg.sender === auth.currentUser.uid) {
+    // Sent messages: double blue tick if seen by friend
+    if (lastMsg.seen) {
+      tickEl.textContent = "✔✔";
+      tickEl.style.color = "deepskyblue";
+    } else if (lastMsg.status === 'delivered') {
+      tickEl.textContent = "✔✔";
+      tickEl.style.color = "";
     } else {
-      // Sent by friend → unread check
-      tickEl.textContent = isUnread ? "✔" : "";
-      tickEl.classList.remove("blue");
+      tickEl.textContent = "✔";
+      tickEl.style.color = "";
     }
   } else {
-    tickEl.textContent = "";
+    // Received messages: show red dot if unread
+    tickEl.textContent = isUnread ? "●" : "";
+    tickEl.style.color = isUnread ? "#e0245e" : "";
   }
 }
 
-// 🔔 Top sliding notification
+// Show notification bar
 function showNotification(message, duration = 3000) {
   const bar = document.getElementById('notifyBar');
   if (!bar) return;
-
   bar.textContent = message;
   bar.classList.add('show');
-
-  setTimeout(() => {
-    bar.classList.remove('show');
-  }, duration);
+  setTimeout(() => bar.classList.remove('show'), duration);
 }
 
 // Open chat and mark messages as read
 async function openChat(friend) {
-  if (!auth.currentUser) return;
+  const me = auth.currentUser;
+  if (!me) return;
+  const chatId = getChatId(me.uid, friend.uid);
 
-  try {
-    const chatId = getChatId(auth.currentUser.uid, friend.uid);
-    const lastReadRef = ref(db, `users/${auth.currentUser.uid}/lastRead/${chatId}`);
-    await set(lastReadRef, Date.now()); // mark read
-
-    const currentChatRef = ref(db, `users/${auth.currentUser.uid}/currentChat`);
-    await set(currentChatRef, {
-      uid: friend.uid,
-      displayName: friend.displayName,
-      photoURL: friend.photoURL || './assets/user.png',
-      email: friend.email || ''
-    });
-
-    window.location.href = './chat.html';
-  } catch (err) {
-    console.error('Error opening chat:', err);
-  }
-}
-
-// Attach listeners for each chat
-function attachChatListeners(friend) {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const chatId = getChatId(user.uid, friend.uid);
-
-  // Last message listener (real-time)
-  const lastMsgRef = query(ref(db, `chats/${chatId}/messages`), limitToLast(1));
-  onValue(lastMsgRef, (snap) => {
-    if (snap.exists()) {
-      const lastMsg = Object.values(snap.val())[0];
-
-      // Get read state
-      const lastReadRef = ref(db, `users/${user.uid}/lastRead/${chatId}`);
-      onValue(lastReadRef, (readSnap) => {
-        const lastRead = readSnap.exists() ? readSnap.val() : 0;
-        const isUnread = lastMsg.timestamp > lastRead && lastMsg.sender !== user.uid;
-
-        // Save into map
-        chatDataMap[friend.uid] = { friend, lastMsg, isUnread };
-
-        // Re-render sorted list
-        renderAllChats();
-        if (isUnread) {
-          showNotification(`New message from ${friend.displayName || "Someone"}`);
-        }
-      });
-    }
+  // Set current chat in DB
+  await set(ref(db, `users/${me.uid}/currentChat`), {
+    uid: friend.uid,
+    displayName: friend.displayName,
+    photoURL: friend.photoURL || './assets/user.png'
   });
 
-  // Typing listener
+  // Update lastRead using seen messages
+  const messagesSnap = await get(ref(db, `chats/${chatId}/messages`));
+  if (messagesSnap.exists()) {
+    const msgs = messagesSnap.val();
+    let maxTs = 0;
+    for (const [key, msg] of Object.entries(msgs)) {
+      if (msg.sender !== me.uid && !msg.seen) {
+        await set(ref(db, `chats/${chatId}/messages/${key}/seen`), true);
+      }
+      if (msg.timestamp > maxTs) maxTs = msg.timestamp;
+    }
+    await set(ref(db, `users/${me.uid}/lastRead/${chatId}`), maxTs);
+  }
+
+  window.location.href = './chat.html';
+}
+
+// Attach listeners to a friend's chat
+function attachChatListeners(friend) {
+  const me = auth.currentUser;
+  if (!me) return;
+  const chatId = getChatId(me.uid, friend.uid);
+  const lastMsgRef = query(ref(db, `chats/${chatId}/messages`), limitToLast(1));
+  const lastReadRef = ref(db, `users/${me.uid}/lastRead/${chatId}`);
+
+  let latestMsg = null;
+  let lastRead = 0;
+
+  onValue(lastMsgRef, (snap) => {
+    if (!snap.exists()) return;
+    latestMsg = Object.values(snap.val())[0];
+    updateFriendCard();
+  });
+
+  onValue(lastReadRef, (snap) => {
+    lastRead = snap.exists() ? snap.val() : 0;
+    updateFriendCard();
+  });
+
+  function updateFriendCard() {
+    if (!latestMsg) return;
+    const isUnread = latestMsg.timestamp > lastRead && latestMsg.sender !== me.uid;
+    chatDataMap[friend.uid] = { friend, lastMsg: latestMsg, isUnread };
+    renderAllChats();
+    if (isUnread) showNotification(`New message from ${friend.displayName || "Someone"}`);
+  }
+
   const typingRef = ref(db, `chats/${chatId}/typing/${friend.uid}`);
   onValue(typingRef, (snap) => {
-    const isTyping = snap.val();
     const card = document.getElementById(`chat-${friend.uid}`);
-    if (card) {
-      const typingEl = card.querySelector('.chat-card-typing');
-      typingEl.textContent = isTyping ? "Typing..." : "";
-    }
+    if (!card) return;
+    card.querySelector('.chat-card-typing').textContent = snap.val() ? "Typing..." : "";
   });
 }
 
-// Re-render sorted chat list
+// Render all chats sorted by latest message
 function renderAllChats() {
   chatsContainer.innerHTML = "";
-
-  const chatArr = Object.values(chatDataMap);
-  chatArr.sort((a, b) => (b.lastMsg?.timestamp || 0) - (a.lastMsg?.timestamp || 0));
-
-  chatArr.forEach(({ friend, lastMsg, isUnread }) => {
-    renderFriendCard(friend, lastMsg, isUnread);
-  });
+  Object.values(chatDataMap)
+    .sort((a, b) => (b.lastMsg?.timestamp || 0) - (a.lastMsg?.timestamp || 0))
+    .forEach(({ friend, lastMsg, isUnread }) => renderFriendCard(friend, lastMsg, isUnread));
 }
 
 // Load friends and attach chat listeners
 function loadFriends() {
-  if (!auth.currentUser || !chatsContainer) return;
-
-  const user = auth.currentUser;
-  const friendsRef = ref(db, `users/${user.uid}/friends`);
-
+  const me = auth.currentUser;
+  if (!me || !chatsContainer) return;
+  const friendsRef = ref(db, `users/${me.uid}/friends`);
   if (friendsListener) friendsListener();
 
-  friendsListener = onValue(friendsRef, (snapshot) => {
-    const friends = snapshot.exists() ? snapshot.val() : {};
-
-    chatsContainer.innerHTML = '';
-
-    if (Object.keys(friends).length === 0) {
-      chatsContainer.innerHTML = `<p>No chats yet. Start chatting with AI personalities!</p>`;
+  friendsListener = onValue(friendsRef, (snap) => {
+    const friends = snap.exists() ? snap.val() : {};
+    if (!Object.keys(friends).length) {
+      chatsContainer.innerHTML = `<p>No chats yet.</p>`;
       return;
     }
-
-    chatDataMap = {}; // reset
-    for (const uid in friends) {
-      attachChatListeners(friends[uid]);
-    }
+    chatDataMap = {};
+    for (const uid in friends) attachChatListeners(friends[uid]);
   });
 }
 
-auth.onAuthStateChanged(user => {
-  if (user) loadFriends();
-});
-
+// Initialize
+auth.onAuthStateChanged(user => { if (user) loadFriends(); });
 export { loadFriends };
