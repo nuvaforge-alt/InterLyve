@@ -193,6 +193,24 @@ auth.onAuthStateChanged(async (user) => {
     if (!data) return;
     Object.entries(data).forEach(([key, msg]) => renderMessage(msg, user.uid, key));
   });
+
+  // ✅ Listen to friend's typing status here
+  const chatId = getChatId(user.uid, currentFriend.uid);
+  const friendTypingRef = ref(db, `chats/${chatId}/typing/${currentFriend.uid}`);
+
+ // Listen to friend's typing status
+onValue(friendTypingRef, (snap) => {
+  const isTyping = snap.val();
+  const typingIndicator = friendStatus.querySelector('.typing-indicator');
+
+  if (isTyping) {
+    typingIndicator.classList.add("active");
+  } else {
+    typingIndicator.classList.remove("active");
+  }
+});
+
+
 });
 
 /* Upload file to ImgBB, return URL */
@@ -358,3 +376,32 @@ chatMessages.addEventListener('click', (e) => {
     modal.addEventListener('click', bgCloseHandler);
   }
 });
+
+
+const friendStatus = document.getElementById('friendStatus');
+let typingTimeout = null;
+
+/* --- Typing status --- */
+function setTypingStatus(isTyping) {
+  if (!auth.currentUser || !currentFriend) return;
+  const chatId = getChatId(auth.currentUser.uid, currentFriend.uid);
+  const typingRef = ref(db, `chats/${chatId}/typing/${auth.currentUser.uid}`);
+  set(typingRef, isTyping);
+}
+
+// detect typing
+messageInput.addEventListener('input', () => {
+  setTypingStatus(true);
+
+  // reset after 2s of no typing
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    setTypingStatus(false);
+  }, 2000);
+});
+
+// stop typing after sending
+sendBtn.addEventListener('click', () => {
+  setTypingStatus(false);
+});
+
