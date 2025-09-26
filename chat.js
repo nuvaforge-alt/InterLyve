@@ -22,6 +22,16 @@ const modalImage = document.getElementById('modalImage');
 const downloadLink = document.getElementById('downloadLink');
 const modalClose = document.getElementById('modalClose');
 
+// Request notification permission
+if ('Notification' in window) {
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      console.log('Notification permission:', permission);
+    });
+  }
+}
+
+
 let currentFriend = null;
 let pendingImageFile = null;
 let typingTimeout = null;
@@ -30,23 +40,6 @@ const IMGBB_API_KEY = '66bcddc873ba6b0036e823676c0d6e76';
 /* Helpers */
 function getChatId(uid1, uid2){ return uid1 < uid2 ? uid1+'_'+uid2 : uid2+'_'+uid1; }
 function playBubbleSound(){ bubbleSound?.play?.().catch(()=>{}); }
-
-/* Request notification permission */
-if ('Notification' in window && Notification.permission === 'default') {
-  Notification.requestPermission().then(permission => console.log('Notification permission:', permission));
-}
-
-/* Show push notification */
-function showPushNotification(title, body, icon) {
-  if (Notification.permission === 'granted') {
-    const notification = new Notification(title, {
-      body: body,
-      icon: icon || './assets/user.png',
-      tag: 'chat-message'
-    });
-    notification.onclick = () => { window.focus(); notification.close(); };
-  }
-}
 
 /* Upload to ImgBB */
 async function uploadToImgbb(file){
@@ -132,8 +125,24 @@ async function openImageModal(msg,msgKey,isViewOnce=false){
     imageModal.style.display='none';
 
     if(isViewOnce && msgKey && msg.sender !== auth.currentUser.uid){
+      // Mark as opened for sender
       await update(msgRef, { opened: true });
+      // Remove image and viewOnce for viewer
       await update(msgRef, { image: null, viewOnce: false, deleteUrl: null });
+
+      // Update sender bubble UI
+      const senderDiv = chatMessages.querySelector(`.message[data-key="${msgKey}"]`);
+      if(senderDiv && msg.sender === auth.currentUser.uid){
+        const bubble = senderDiv.querySelector('.bubble');
+        bubble.innerHTML=`<div style="padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;">📷 Opened</div>`;
+      }
+
+      // Update viewer bubble UI
+      const viewerDiv = chatMessages.querySelector(`.message[data-key="${msgKey}"]`);
+      if(viewerDiv && msg.sender !== auth.currentUser.uid){
+        const bubble = viewerDiv.querySelector('.bubble');
+        bubble.innerHTML=`<div style="padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;">📷 Viewed</div>`;
+      }
 
       // Delete from ImgBB
       if(msg.deleteUrl) await fetch(msg.deleteUrl).catch(()=>{});
@@ -208,15 +217,6 @@ auth.onAuthStateChanged(async user=>{
         }
       }
 
-      // Trigger push notification for messages received from friend
-      if(msg.sender===currentFriend.uid){
-        showPushNotification(
-          currentFriend.displayName || 'New message',
-          msg.text || (msg.image ? '[Image]' : ''),
-          currentFriend.photoURL
-        );
-      }
-
       // View-once click
       if(msg.viewOnce && msg.sender!==user.uid){
         const v1Box = div.querySelector('.view-once-box');
@@ -267,8 +267,23 @@ fileInput.addEventListener('change', ()=>{
   pendingImageFile=fileInput.files[0];
   if(pendingImageFile){ previewImage.src=URL.createObjectURL(pendingImageFile); previewContainer.style.display='flex'; }
 });
-previewRemoveBtn.addEventListener('click', ()=>{
-  pendingImageFile=null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; 
-});
+previewRemoveBtn.addEventListener('click', ()=>{ pendingImageFile=null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; });
 chatMessages.addEventListener('scroll', markMessagesAsSeen);
 window.addEventListener('load', markMessagesAsSeen);
+
+
+function showPushNotification(title, body, icon) {
+  if (Notification.permission === 'granted') {
+    const notification = new Notification(title, {
+      body: body,
+      icon: icon || './assets/user.png',
+      tag: 'chat-message' // prevent multiple notifications for the same message if needed
+    });
+
+    // Optional: click action
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+  }
+}
