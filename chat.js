@@ -22,23 +22,21 @@ const modalImage = document.getElementById('modalImage');
 const downloadLink = document.getElementById('downloadLink');
 const modalClose = document.getElementById('modalClose');
 
-// Request notification permission
-if ('Notification' in window) {
-  if (Notification.permission === 'default') {
-    Notification.requestPermission().then(permission => {
-      console.log('Notification permission:', permission);
-    });
-  }
+/* Notification Permission */
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission().then(permission => {
+    console.log('Notification permission:', permission);
+  });
 }
-
 
 let currentFriend = null;
 let pendingImageFile = null;
 let typingTimeout = null;
 const IMGBB_API_KEY = '66bcddc873ba6b0036e823676c0d6e76';
+const notifiedMessages = new Set(); // Track notified messages
 
 /* Helpers */
-function getChatId(uid1, uid2){ return uid1 < uid2 ? uid1+'_'+uid2 : uid2+'_'+uid1; }
+function getChatId(uid1, uid2) { return uid1 < uid2 ? uid1+'_'+uid2 : uid2+'_'+uid1; }
 function playBubbleSound(){ bubbleSound?.play?.().catch(()=>{}); }
 
 /* Upload to ImgBB */
@@ -64,52 +62,60 @@ function renderMessage(msg, userUid, key){
   img.classList.add('msg-profile');
   div.appendChild(img);
 
-  const bubble = document.createElement('div'); bubble.classList.add('bubble');
+  const bubble = document.createElement('div'); 
+  bubble.classList.add('bubble');
 
   // Images & View-once
   if(msg.viewOnce && msg.image && msg.sender!==userUid){
-    const v1Box = document.createElement('div'); v1Box.classList.add('view-once-box');
+    const v1Box = document.createElement('div'); 
+    v1Box.classList.add('view-once-box');
     v1Box.textContent = "📷 View Once";
     v1Box.style.cssText = "padding:20px;text-align:center;border:2px dashed #888;border-radius:10px;cursor:pointer;";
     bubble.appendChild(v1Box);
     v1Box.addEventListener('click', ()=> openImageModal(msg,key,true));
   } else if(msg.viewOnce && msg.sender===userUid){
-    if(msg.opened){
-      const openedBox = document.createElement('div'); openedBox.classList.add('view-once-opened');
-      openedBox.textContent = "📷 Opened";
-      openedBox.style.cssText = "padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;";
-      bubble.appendChild(openedBox);
-    } else {
-      const sentBox = document.createElement('div'); sentBox.classList.add('view-once-sent');
-      sentBox.textContent = "✔ View Once sent";
-      sentBox.style.cssText = "padding:15px;text-align:center;border:2px solid #4CAF50;border-radius:10px;";
-      bubble.appendChild(sentBox);
-    }
+    const sentBox = document.createElement('div'); 
+    sentBox.classList.add('view-once-sent');
+    sentBox.textContent = msg.opened ? "📷 Opened" : "✔ View Once sent";
+    sentBox.style.cssText = msg.opened 
+      ? "padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;" 
+      : "padding:15px;text-align:center;border:2px solid #4CAF50;border-radius:10px;";
+    bubble.appendChild(sentBox);
   } else if(msg.image){
-    const mImg = document.createElement('img'); mImg.src = msg.image; mImg.classList.add('message-image');
+    const mImg = document.createElement('img'); 
+    mImg.src = msg.image; 
+    mImg.classList.add('message-image');
     mImg.style.cssText = "width:280px;border-radius:10px;display:block;margin-bottom:"+(msg.text?'8px':'0');
     bubble.appendChild(mImg);
     mImg.style.cursor='pointer';
-    mImg.onclick = ()=> openImageModal(msg,key,false); // normal image
+    mImg.onclick = ()=> openImageModal(msg,key,false);
   }
 
   if(msg.text){
-    const messageText = document.createElement('div'); messageText.textContent = msg.text; bubble.appendChild(messageText);
+    const messageText = document.createElement('div'); 
+    messageText.textContent = msg.text; 
+    bubble.appendChild(messageText);
   }
 
-  const timestamp = document.createElement('div'); timestamp.classList.add('timestamp');
-  const date = new Date(msg.timestamp); timestamp.textContent = `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+  const timestamp = document.createElement('div'); 
+  timestamp.classList.add('timestamp');
+  const date = new Date(msg.timestamp); 
+  timestamp.textContent = `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
   bubble.appendChild(timestamp);
 
   if(msg.sender===userUid && msg.seen){
-    const seenText = document.createElement('div'); seenText.classList.add('seen-text');
-    seenText.textContent='Seen'; seenText.style.cssText="font-size:12px;color:#888;margin-top:4px;text-align:right;";
+    const seenText = document.createElement('div'); 
+    seenText.classList.add('seen-text');
+    seenText.textContent='Seen'; 
+    seenText.style.cssText="font-size:12px;color:#888;margin-top:4px;text-align:right;";
     bubble.appendChild(seenText);
   }
 
-  div.appendChild(bubble); chatMessages.appendChild(div);
+  div.appendChild(bubble); 
+  chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  bubble.classList.add('bubble-pop'); setTimeout(()=>bubble.classList.remove('bubble-pop'),300);
+  bubble.classList.add('bubble-pop'); 
+  setTimeout(()=>bubble.classList.remove('bubble-pop'),300);
 }
 
 /* Image Modal open */
@@ -121,37 +127,16 @@ async function openImageModal(msg,msgKey,isViewOnce=false){
   const chatId = getChatId(auth.currentUser.uid,currentFriend.uid);
   const msgRef = ref(db, `chats/${chatId}/messages/${msgKey}`);
 
-  const closeHandler = async ()=>{
+  const closeHandler = async ()=> {
     imageModal.style.display='none';
-
     if(isViewOnce && msgKey && msg.sender !== auth.currentUser.uid){
-      // Mark as opened for sender
-      await update(msgRef, { opened: true });
-      // Remove image and viewOnce for viewer
-      await update(msgRef, { image: null, viewOnce: false, deleteUrl: null });
-
-      // Update sender bubble UI
-      const senderDiv = chatMessages.querySelector(`.message[data-key="${msgKey}"]`);
-      if(senderDiv && msg.sender === auth.currentUser.uid){
-        const bubble = senderDiv.querySelector('.bubble');
-        bubble.innerHTML=`<div style="padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;">📷 Opened</div>`;
-      }
-
-      // Update viewer bubble UI
-      const viewerDiv = chatMessages.querySelector(`.message[data-key="${msgKey}"]`);
-      if(viewerDiv && msg.sender !== auth.currentUser.uid){
-        const bubble = viewerDiv.querySelector('.bubble');
-        bubble.innerHTML=`<div style="padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;">📷 Viewed</div>`;
-      }
-
-      // Delete from ImgBB
+      await update(msgRef, { opened: true, image: null, viewOnce: false, deleteUrl: null });
       if(msg.deleteUrl) await fetch(msg.deleteUrl).catch(()=>{});
     }
-
     modalClose.removeEventListener('click', closeHandler);
     imageModal.removeEventListener('click', bgClickHandler);
   };
-  const bgClickHandler = e=>{ if(e.target.id==='imageModal') closeHandler(); };
+  const bgClickHandler = e => { if(e.target.id==='imageModal') closeHandler(); };
   modalClose.addEventListener('click', closeHandler);
   imageModal.addEventListener('click', bgClickHandler);
 
@@ -189,6 +174,13 @@ function setTypingStatus(isTyping){
   set(ref(db, `chats/${chatId}/typing/${auth.currentUser.uid}`), isTyping);
 }
 
+/* Push Notifications */
+function showPushNotification(title, body, icon){
+  if(Notification.permission==='granted'){
+    new Notification(title,{ body, icon: icon||'./assets/user.png', tag:'chat-message' }).onclick=()=>{ window.focus(); };
+  }
+}
+
 /* Auth listener & real-time updates */
 auth.onAuthStateChanged(async user=>{
   if(!user) return;
@@ -202,17 +194,20 @@ auth.onAuthStateChanged(async user=>{
   const messagesRef = ref(db, `chats/${chatId}/messages`);
   onValue(messagesRef, snap=>{
     const data = snap.val(); if(!data){ chatMessages.innerHTML=''; return; }
+
     Object.entries(data).forEach(([key,msg])=>{
       let div = chatMessages.querySelector(`.message[data-key="${key}"]`);
       if(!div) renderMessage(msg,user.uid,key);
 
-      // Seen tick for sender
+      // Seen tick
       div = chatMessages.querySelector(`.message[data-key="${key}"]`);
       if(msg.sender===user.uid && msg.seen){
         const bubble = div.querySelector('.bubble');
         if(!bubble.querySelector('.seen-text')){
-          const seenText=document.createElement('div'); seenText.classList.add('seen-text');
-          seenText.style.cssText="font-size:12px;color:#888;margin-top:4px;text-align:right;"; seenText.textContent='Seen';
+          const seenText=document.createElement('div'); 
+          seenText.classList.add('seen-text');
+          seenText.style.cssText="font-size:12px;color:#888;margin-top:4px;text-align:right;"; 
+          seenText.textContent='Seen';
           bubble.appendChild(seenText);
         }
       }
@@ -222,8 +217,18 @@ auth.onAuthStateChanged(async user=>{
         const v1Box = div.querySelector('.view-once-box');
         if(v1Box) v1Box.onclick=()=>openImageModal(msg,key,true);
       }
+
+      // 🔔 Push notification
+      if(msg.sender!==user.uid && !msg.seen && !notifiedMessages.has(key)){
+        const title = currentFriend.displayName || 'New Message';
+        const body = msg.text ? msg.text : '📷 Image';
+        const icon = currentFriend.photoURL || './assets/user.png';
+        showPushNotification(title, body, icon);
+        notifiedMessages.add(key);
+      }
     });
-    chatMessages.scrollTop=chatMessages.scrollHeight;
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
     markMessagesAsSeen();
   });
 
@@ -238,7 +243,8 @@ auth.onAuthStateChanged(async user=>{
 /* Send message */
 sendBtn.addEventListener('click', async ()=>{
   if(!currentFriend || !auth.currentUser) return;
-  const text = messageInput.value.trim(); if(!text && !pendingImageFile) return;
+  const text = messageInput.value.trim(); 
+  if(!text && !pendingImageFile) return;
   sendBtn.disabled=true;
   const user = auth.currentUser;
   const messagesRef = ref(db, `chats/${getChatId(user.uid,currentFriend.uid)}/messages`);
@@ -259,9 +265,7 @@ sendBtn.addEventListener('click', async ()=>{
 
 /* Input & file handling */
 messageInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendBtn.click(); });
-messageInput.addEventListener('input', ()=>{
-  setTypingStatus(true); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>setTypingStatus(false),2000);
-});
+messageInput.addEventListener('input', ()=>{ setTypingStatus(true); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>setTypingStatus(false),2000); });
 fileBtn.addEventListener('click', ()=>fileInput.click());
 fileInput.addEventListener('change', ()=>{
   pendingImageFile=fileInput.files[0];
@@ -270,20 +274,3 @@ fileInput.addEventListener('change', ()=>{
 previewRemoveBtn.addEventListener('click', ()=>{ pendingImageFile=null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; });
 chatMessages.addEventListener('scroll', markMessagesAsSeen);
 window.addEventListener('load', markMessagesAsSeen);
-
-
-function showPushNotification(title, body, icon) {
-  if (Notification.permission === 'granted') {
-    const notification = new Notification(title, {
-      body: body,
-      icon: icon || './assets/user.png',
-      tag: 'chat-message' // prevent multiple notifications for the same message if needed
-    });
-
-    // Optional: click action
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-  }
-}
