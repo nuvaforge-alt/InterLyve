@@ -8,6 +8,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging.js";
+
+
+
 
 import { loadExploreUsers} from './explore.js';
 
@@ -26,11 +30,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+
 // ---- Signup DOM Elements ----
 const signupPicInput = document.getElementById("signupProfilePic");
 const signupPicPreview = document.getElementById("signupPicPreview");
 const uploadPicBtn = document.getElementById("uploadPicBtn");
 const fileNameDisplay = document.getElementById("fileNameDisplay");
+
+
+
 
 if (signupPicInput && signupPicPreview && uploadPicBtn) {
   uploadPicBtn.addEventListener("click", () => {
@@ -249,6 +257,9 @@ window.login = login;
 window.signup = signup;
 window.openModal = openModal;
 window.closeModal = closeModal;
+
+
+
 
 
 // At the bottom of app.js

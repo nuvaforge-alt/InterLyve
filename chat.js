@@ -1,7 +1,7 @@
 // chat.js
 import { auth, db } from './app.js';
 import { ref, get, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
+import { requestNotificationPermission } from './notifications.js';
 
 /* DOM Elements */
 const friendPhoto = document.getElementById('friendPhoto');
@@ -23,12 +23,10 @@ const modalImage = document.getElementById('modalImage');
 const downloadLink = document.getElementById('downloadLink');
 const modalClose = document.getElementById('modalClose');
 
-// Request notification permission
-if ('Notification' in window) {
-  if (Notification.permission === 'default') {
-    Notification.requestPermission().then(permission => {
-      console.log('Notification permission:', permission);
-    });
+function showPushNotification(title, body) {
+  if (Notification.permission === 'granted') {
+    const notification = new Notification(title, { body, icon: '/assets/user.png', tag: 'chat-message' });
+    notification.onclick = () => { window.focus(); notification.close(); };
   }
 }
 
@@ -273,18 +271,3 @@ chatMessages.addEventListener('scroll', markMessagesAsSeen);
 window.addEventListener('load', markMessagesAsSeen);
 
 
-function showPushNotification(title, body, icon) {
-  if (Notification.permission === 'granted') {
-    const notification = new Notification(title, {
-      body: body,
-      icon: icon || './assets/user.png',
-      tag: 'chat-message' // prevent multiple notifications for the same message if needed
-    });
-
-    // Optional: click action
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-  }
-}
