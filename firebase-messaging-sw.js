@@ -2,7 +2,6 @@
 import { auth, db } from './app.js';
 import { ref, get, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-
 /* DOM Elements */
 const friendPhoto = document.getElementById('friendPhoto');
 const friendName = document.getElementById('friendName');
@@ -23,15 +22,10 @@ const modalImage = document.getElementById('modalImage');
 const downloadLink = document.getElementById('downloadLink');
 const modalClose = document.getElementById('modalClose');
 
-// Request notification permission
-if ('Notification' in window) {
-  if (Notification.permission === 'default') {
-    Notification.requestPermission().then(permission => {
-      console.log('Notification permission:', permission);
-    });
-  }
+/* Request notification permission */
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission().then(permission => console.log('Notification permission:', permission));
 }
-
 
 let currentFriend = null;
 let pendingImageFile = null;
@@ -91,7 +85,7 @@ function renderMessage(msg, userUid, key){
     mImg.style.cssText = "width:280px;border-radius:10px;display:block;margin-bottom:"+(msg.text?'8px':'0');
     bubble.appendChild(mImg);
     mImg.style.cursor='pointer';
-    mImg.onclick = ()=> openImageModal(msg,key,false); // normal image
+    mImg.onclick = ()=> openImageModal(msg,key,false);
   }
 
   if(msg.text){
@@ -124,31 +118,11 @@ async function openImageModal(msg,msgKey,isViewOnce=false){
 
   const closeHandler = async ()=>{
     imageModal.style.display='none';
-
     if(isViewOnce && msgKey && msg.sender !== auth.currentUser.uid){
-      // Mark as opened for sender
       await update(msgRef, { opened: true });
-      // Remove image and viewOnce for viewer
       await update(msgRef, { image: null, viewOnce: false, deleteUrl: null });
-
-      // Update sender bubble UI
-      const senderDiv = chatMessages.querySelector(`.message[data-key="${msgKey}"]`);
-      if(senderDiv && msg.sender === auth.currentUser.uid){
-        const bubble = senderDiv.querySelector('.bubble');
-        bubble.innerHTML=`<div style="padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;">📷 Opened</div>`;
-      }
-
-      // Update viewer bubble UI
-      const viewerDiv = chatMessages.querySelector(`.message[data-key="${msgKey}"]`);
-      if(viewerDiv && msg.sender !== auth.currentUser.uid){
-        const bubble = viewerDiv.querySelector('.bubble');
-        bubble.innerHTML=`<div style="padding:15px;text-align:center;border:2px dashed #888;border-radius:10px;color:#888;">📷 Viewed</div>`;
-      }
-
-      // Delete from ImgBB
       if(msg.deleteUrl) await fetch(msg.deleteUrl).catch(()=>{});
     }
-
     modalClose.removeEventListener('click', closeHandler);
     imageModal.removeEventListener('click', bgClickHandler);
   };
@@ -190,6 +164,14 @@ function setTypingStatus(isTyping){
   set(ref(db, `chats/${chatId}/typing/${auth.currentUser.uid}`), isTyping);
 }
 
+/* Show push notification */
+function showPushNotification(title, body, icon){
+  if(Notification.permission === 'granted'){
+    const notification = new Notification(title, { body, icon: icon||'./assets/user.png', tag:'chat-message' });
+    notification.onclick = () => { window.focus(); notification.close(); };
+  }
+}
+
 /* Auth listener & real-time updates */
 auth.onAuthStateChanged(async user=>{
   if(!user) return;
@@ -201,13 +183,24 @@ auth.onAuthStateChanged(async user=>{
 
   const chatId = getChatId(user.uid,currentFriend.uid);
   const messagesRef = ref(db, `chats/${chatId}/messages`);
+
   onValue(messagesRef, snap=>{
     const data = snap.val(); if(!data){ chatMessages.innerHTML=''; return; }
-    Object.entries(data).forEach(([key,msg])=>{
+    Object.entries(data).forEach(async ([key,msg])=>{
       let div = chatMessages.querySelector(`.message[data-key="${key}"]`);
       if(!div) renderMessage(msg,user.uid,key);
 
-      // Seen tick for sender
+      // Incoming message notification
+      if(msg.sender !== user.uid && !msg.notified){
+        showPushNotification(
+          `${currentFriend.displayName} says:`,
+          msg.text || '📷 Image',
+          currentFriend.photoURL || './assets/user.png'
+        );
+        await update(ref(db, `chats/${chatId}/messages/${key}`), { notified: true });
+      }
+
+      // Seen tick
       div = chatMessages.querySelector(`.message[data-key="${key}"]`);
       if(msg.sender===user.uid && msg.seen){
         const bubble = div.querySelector('.bubble');
@@ -230,9 +223,9 @@ auth.onAuthStateChanged(async user=>{
 
   // Typing indicator
   const typingRef = ref(db, `chats/${chatId}/typing/${currentFriend.uid}`);
-  onValue(typingRef,snap=>{
-    const indicator=document.querySelector('.typing-indicator');
-    if(indicator) indicator.classList.toggle('active',!!snap.val());
+  onValue(typingRef, snap=>{
+    const indicator = document.querySelector('.typing-indicator');
+    if(indicator) indicator.classList.toggle('active', !!snap.val());
   });
 });
 
@@ -240,20 +233,28 @@ auth.onAuthStateChanged(async user=>{
 sendBtn.addEventListener('click', async ()=>{
   if(!currentFriend || !auth.currentUser) return;
   const text = messageInput.value.trim(); if(!text && !pendingImageFile) return;
-  sendBtn.disabled=true;
+  sendBtn.disabled = true;
   const user = auth.currentUser;
   const messagesRef = ref(db, `chats/${getChatId(user.uid,currentFriend.uid)}/messages`);
   const msgData = { sender:user.uid, timestamp:Date.now() };
   try{
     if(pendingImageFile){
       const {url,deleteUrl} = await uploadToImgbb(pendingImageFile);
-      msgData.image=url;
-      if(viewOnceCheckbox.checked){ msgData.viewOnce=true; msgData.deleteUrl=deleteUrl; }
-      pendingImageFile=null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; viewOnceCheckbox.checked=false;
+      msgData.image = url;
+      if(viewOnceCheckbox.checked){ msgData.viewOnce = true; msgData.deleteUrl = deleteUrl; }
+      pendingImageFile = null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; viewOnceCheckbox.checked=false;
     }
     if(text) msgData.text=text;
     await push(messagesRef,msgData);
     playBubbleSound(); messageInput.value=''; setTypingStatus(false);
+
+    // Notify self about sent message
+    showPushNotification(
+      `You sent a message to ${currentFriend.displayName}`,
+      msgData.text || '📷 Image',
+      auth.currentUser.photoURL || './assets/user.png'
+    );
+
   }catch(err){ console.error(err); alert('Send error: '+err.message); }
   finally{ sendBtn.disabled=false; }
 });
@@ -261,30 +262,17 @@ sendBtn.addEventListener('click', async ()=>{
 /* Input & file handling */
 messageInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendBtn.click(); });
 messageInput.addEventListener('input', ()=>{
-  setTypingStatus(true); clearTimeout(typingTimeout); typingTimeout=setTimeout(()=>setTypingStatus(false),2000);
+  setTypingStatus(true);
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(()=>setTypingStatus(false),2000);
 });
 fileBtn.addEventListener('click', ()=>fileInput.click());
 fileInput.addEventListener('change', ()=>{
   pendingImageFile=fileInput.files[0];
   if(pendingImageFile){ previewImage.src=URL.createObjectURL(pendingImageFile); previewContainer.style.display='flex'; }
 });
-previewRemoveBtn.addEventListener('click', ()=>{ pendingImageFile=null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; });
+previewRemoveBtn.addEventListener('click', ()=>{
+  pendingImageFile=null; previewImage.src=''; previewContainer.style.display='none'; fileInput.value=''; 
+});
 chatMessages.addEventListener('scroll', markMessagesAsSeen);
 window.addEventListener('load', markMessagesAsSeen);
-
-
-function showPushNotification(title, body, icon) {
-  if (Notification.permission === 'granted') {
-    const notification = new Notification(title, {
-      body: body,
-      icon: icon || './assets/user.png',
-      tag: 'chat-message' // prevent multiple notifications for the same message if needed
-    });
-
-    // Optional: click action
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-  }
-}
