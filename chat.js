@@ -272,7 +272,7 @@ auth.onAuthStateChanged(async user=>{
 // Call Render server to send push notifications
 async function sendNotification(chatId, senderUid, msgData) {
   try {
-    const response = await fetch('http://localhost:3000/send-notification', {
+    const response = await fetch('https://interlyve-1.onrender.com/send-notification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chatId, senderUid, message: msgData })
