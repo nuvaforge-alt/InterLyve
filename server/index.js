@@ -25,7 +25,9 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // fallback is fine
+
+
 
 // Health check route
 app.get('/', (req, res) => res.send('Notification server running'));
@@ -96,3 +98,4 @@ const payload = {
 
 // Start server
 app.listen(PORT, () => console.log(`Notification server running on port ${PORT}`));
+
