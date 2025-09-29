@@ -65,8 +65,7 @@ app.post('/send-notification', async (req, res) => {
 const payload = {
   notification: {
     title: `New message from ${senderName}`,
-    body: message.text || (message.image ? '📷 Sent you an image' : 'New message'),
-    badge: '/assets/intercon.png', 
+    body: message.text || (message.image ? '📷 Sent you an image' : 'New message')
     // DO NOT include icon here
   },
   webpush: {
@@ -99,6 +98,7 @@ const payload = {
 
 // Start server
 app.listen(PORT, () => console.log(`Notification server running on port ${PORT}`));
+
 
 
 
