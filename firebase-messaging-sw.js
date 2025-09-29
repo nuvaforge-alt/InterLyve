@@ -20,6 +20,7 @@ messaging.onBackgroundMessage(payload => {
   self.registration.showNotification(title, {
     body,
     icon: icon || '/assets/user.png',
+    badge: '/assets/intercon.png', 
     data: data // carry chatId and senderUid
   });
 });
