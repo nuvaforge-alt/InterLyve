@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chats - InterLyve</title>
+  <link rel="stylesheet" href="main.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">InterLyve</header>
+
+  <main class="main-content">
+    <div class="search-bar">
+      <input type="text" placeholder="Search chats...">
+    </div>
+    <div class="empty-chats" id="chatsContainer">
+      <p>No chats yet. Visit explore!</p>
+    </div>
+  </main>
+
+  <div id="notificationsContainer" class="notifications-container">
+  <!-- Notifications will appear here -->
+</div>
+
+  <nav class="bottom-nav">
+    <button onclick="window.location.href='main page.html'" class="nav-item active">
+      <span class="material-icons">chat</span>
+      <span class="label">Chats</span>
+    </button>
+    <button onclick="window.location.href='explore.html'" class="nav-item">
+      <span class="material-icons">explore</span>
+      <span class="label">Explore</span>
+    </button>
+    <button onclick="window.location.href='settings.html'" class="nav-item">
+      <span class="material-icons">settings</span>
+      <span class="label">Settings</span>
+    </button>
+  </nav>
+
+
+  <div id="notifyBar" class="notify-bar"></div>
+
+  <script type="module" src="./app.js"></script>
+<script type="module" src="./explore.js"></script>
+<script type="module" src="./chats.js"></script>
+<script type="module" src="./notifications.js"></script>
+
+</body>
+</html>

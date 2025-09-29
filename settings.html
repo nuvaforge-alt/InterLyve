@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - InterLyve</title>
+  <link rel="stylesheet" href="main.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">InterLyve</header>
+
+  <main class="main-content">
+    <div class="settings-container">
+      <div class="profile-card">
+        <img id="settingsProfilePic" src="default-avatar.png" alt="Profile Picture">
+        <div class="profile-info">
+          <div class="profile-header">
+            <input type="text" id="settingsUsername" placeholder="Username" disabled>
+            <button id="editSettingsBtn" class="edit-btn">&#9998;</button>
+          </div>
+          <input type="email" id="settingsEmail" placeholder="Email" disabled>
+        </div>
+      </div>
+
+      <div class="details-card">
+        <label>Date of Birth</label>
+        <input type="date" id="settingsDOB" disabled>
+        <label>Country</label>
+        <input type="text" id="settingsCountry" placeholder="Country" disabled>
+        <label>Gender</label>
+        <select id="settingsGender" disabled>
+          <option value="">Select Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="custom">Custom</option>
+        </select>
+        <label>Location</label>
+        <input type="text" id="settingsLocation" placeholder="Location" disabled>
+
+         <button class="btn primary hidden" id="saveSettingsBtn">Save Changes</button>
+        
+      </div>
+
+     
+    </div>
+  </main>
+
+  <div id="notificationsContainer" class="notifications-container">
+  <!-- Notifications will appear here -->
+</div>
+
+
+  <nav class="bottom-nav">
+    <button onclick="window.location.href='main page.html'" class="nav-item">
+      <span class="material-icons">chat</span>
+      <span class="label">Chats</span>
+    </button>
+    <button onclick="window.location.href='explore.html'" class="nav-item">
+      <span class="material-icons">explore</span>
+      <span class="label">Explore</span>
+    </button>
+    <button onclick="window.location.href='settings.html'" class="nav-item active">
+      <span class="material-icons">settings</span>
+      <span class="label">Settings</span>
+    </button>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+  <script type="module" src="./notifications.js"></script>
+
+</body>
+</html>

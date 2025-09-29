@@ -1,0 +1,3 @@
+next 2
+
+ const apiKey = "66bcddc873ba6b0036e823676c0d6e76"
