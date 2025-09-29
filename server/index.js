@@ -72,7 +72,7 @@ const payload = {
   webpush: {
     notification: {
       icon: senderData.photoURL || '/assets/user.png' // <-- correct place
-      badge: 'https://interlyve2.netlify.app/assets/intercon.png',
+     // badge: 'https://interlyve2.netlify.app/assets/intercon.png',
     },
     fcmOptions: {
       link: `/chat.html?chatId=${chatId}`
@@ -100,6 +100,7 @@ const payload = {
 
 // Start server
 app.listen(PORT, () => console.log(`Notification server running on port ${PORT}`));
+
 
 
 
