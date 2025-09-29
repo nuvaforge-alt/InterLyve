@@ -66,6 +66,9 @@ const payload = {
   notification: {
     title: `New message from ${senderName}`,
     body: message.text || (message.image ? '📷 Sent you an image' : 'New message'),
+     actions: [
+    { action: "reply", title: "Reply" }
+  ]
 
     // DO NOT include icon here
   },
@@ -100,6 +103,7 @@ const payload = {
 
 // Start server
 app.listen(PORT, () => console.log(`Notification server running on port ${PORT}`));
+
 
 
 
