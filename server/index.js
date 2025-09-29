@@ -65,7 +65,8 @@ app.post('/send-notification', async (req, res) => {
 const payload = {
   notification: {
     title: `New message from ${senderName}`,
-    body: message.text || (message.image ? '📷 Sent you an image' : 'New message')
+    body: message.text || (message.image ? '📷 Sent you an image' : 'New message'),
+    badge: 'https://interlyve2.netlify.app/assets/intercon.png', 
     // DO NOT include icon here
   },
   webpush: {
@@ -98,4 +99,5 @@ const payload = {
 
 // Start server
 app.listen(PORT, () => console.log(`Notification server running on port ${PORT}`));
+
 
